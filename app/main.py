@@ -1,15 +1,4 @@
 import os
-# --- DEBUG START ---
-print("🔍--- STARTING DEBUG ---")
-print("I am running in directory:", os.getcwd())
-print("Do I see MAIL_USERNAME?", "MAIL_USERNAME" in os.environ)
-if "MAIL_USERNAME" in os.environ:
-    print("MAIL_USERNAME value is:", os.environ["MAIL_USERNAME"])
-else:
-    print("❌ ERROR: MAIL_USERNAME is MISSING from environment variables!")
-print("🔍--- END DEBUG ---")
-# --- DEBUG END ---
-
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 import datetime 
 from datetime import timedelta
@@ -87,10 +76,13 @@ async def create_user(
     
    # 5. "Send" Email Link (Print to console)
     # NOTE: When you deploy, change "http://127.0.0.1:8000" to your real URL
-    link = f"http://127.0.0.1:8000/verify-email?token={verification_token}"
+
+    backend_url = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
+    link = f"{backend_url}/verify-email?token={verification_token}"
+
     print(f"\n📨 SENDING EMAIL TO {user.email}")
     print(f"👉 Click here to verify: {link}\n")
-    
+
     return new_user
 
 @app.post("/token", response_model=schemas.Token)
