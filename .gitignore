@@ -1,0 +1,19 @@
+# --- Security (NEVER UPLOAD THESE) ---
+.env
+.env.local
+
+# --- Python Virtual Environment ---
+venv/
+env/
+.venv/
+
+# --- Bytecode (Junk files) ---
+__pycache__/
+*.py[cod]
+
+# --- IDE Settings (VS Code) ---
+.vscode/
+
+# --- Database (If you ever take a backup dump) ---
+*.sql
+*.sqlite3
