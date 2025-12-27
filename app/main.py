@@ -73,9 +73,7 @@ async def create_user(
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    
-   # 5. "Send" Email Link (Print to console)
-    # NOTE: When you deploy, change "http://127.0.0.1:8000" to your real URL
+    # 4. Send Verification Email in Background
 
     backend_url = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
     link = f"{backend_url}/verify-email?token={verification_token}"
@@ -271,13 +269,17 @@ async def upload_image(request: Request, file: UploadFile = File(...)):
     unique_filename = f"{uuid.uuid4()}.{file_extension}"
     file_path = f"static/images/{unique_filename}"
     
+    # Create the directory if it doesn't exist yet
+    os.makedirs("static/images", exist_ok=True)
+
     # 3. Save the file to your disk
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
         
     # 4. Return the URL
-    # In production, this would be "https://ubcconnect.com/static/..."
-    return {"url": f"/static/images/{unique_filename}"}
+    base_url = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
+    
+    return {"url": f"{base_url}/static/images/{unique_filename}"}
 
 
 @app.delete("/events/{event_id}")
