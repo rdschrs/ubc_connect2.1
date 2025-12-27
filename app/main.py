@@ -16,10 +16,13 @@ from slowapi.errors import RateLimitExceeded
 from apscheduler.schedulers.background import BackgroundScheduler
 from sqlalchemy import func
 from fastapi.responses import RedirectResponse, HTMLResponse # <--- Add this
+import os
 
 
 
+print("🔍 DEBUG: CURRENT ENV VARS:", os.environ.keys())
 
+# ... rest of your imports
 # Create Tables
 #models.Base.metadata.drop_all(bind=database.engine)
 models.Base.metadata.create_all(bind=database.engine)
