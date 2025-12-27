@@ -1,3 +1,15 @@
+import os
+# --- DEBUG START ---
+print("🔍--- STARTING DEBUG ---")
+print("I am running in directory:", os.getcwd())
+print("Do I see MAIL_USERNAME?", "MAIL_USERNAME" in os.environ)
+if "MAIL_USERNAME" in os.environ:
+    print("MAIL_USERNAME value is:", os.environ["MAIL_USERNAME"])
+else:
+    print("❌ ERROR: MAIL_USERNAME is MISSING from environment variables!")
+print("🔍--- END DEBUG ---")
+# --- DEBUG END ---
+
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 import datetime 
 from datetime import timedelta
@@ -16,13 +28,7 @@ from slowapi.errors import RateLimitExceeded
 from apscheduler.schedulers.background import BackgroundScheduler
 from sqlalchemy import func
 from fastapi.responses import RedirectResponse, HTMLResponse # <--- Add this
-import os
 
-
-
-print("🔍 DEBUG: CURRENT ENV VARS:", os.environ.keys())
-
-# ... rest of your imports
 # Create Tables
 #models.Base.metadata.drop_all(bind=database.engine)
 models.Base.metadata.create_all(bind=database.engine)
