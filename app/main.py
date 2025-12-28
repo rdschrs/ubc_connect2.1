@@ -17,6 +17,10 @@ from slowapi.errors import RateLimitExceeded
 from apscheduler.schedulers.background import BackgroundScheduler
 from sqlalchemy import func
 from fastapi.responses import RedirectResponse, HTMLResponse # <--- Add this
+import boto3
+from botocore.exceptions import NoCredentialsError
+
+
 
 # Create Tables
 #models.Base.metadata.drop_all(bind=database.engine)
@@ -24,6 +28,21 @@ models.Base.metadata.create_all(bind=database.engine)
 limiter = Limiter(key_func=get_remote_address) # Rate Limiter
 
 app = FastAPI(title="UBC Connect Backend")
+
+# --- CONFIGURATION ---
+# AWS S3 Settings (Load from Environment Variables)
+AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_BUCKET_NAME = os.getenv("AWS_BUCKET_NAME")
+AWS_REGION = os.getenv("AWS_REGION", "us-west-2")
+
+# S3 Client Setup
+s3_client = boto3.client(
+    's3',
+    aws_access_key_id=AWS_ACCESS_KEY,
+    aws_secret_access_key=AWS_SECRET_KEY,
+    region_name=AWS_REGION
+)
 
 # This tells the server: "If someone asks for /static/..., show them the files in the static folder"
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -267,19 +286,24 @@ async def upload_image(request: Request, file: UploadFile = File(...)):
     # Result: "images/a1b2c3d4-party.jpg"
     file_extension = file.filename.split(".")[-1]
     unique_filename = f"{uuid.uuid4()}.{file_extension}"
-    file_path = f"static/images/{unique_filename}"
     
-    # Create the directory if it doesn't exist yet
-    os.makedirs("static/images", exist_ok=True)
+    # 3. Upload to AWS S3
+    try:
+        s3_client.upload_fileobj(
+            file.file,
+            AWS_BUCKET_NAME,
+            unique_filename,
+            ExtraArgs={'ContentType': file.content_type} # Important for browser viewing
+        )
+    except Exception as e:
+        print(f"AWS Upload Error: {e}")
+        raise HTTPException(status_code=500, detail="Image upload failed")
 
-    # 3. Save the file to your disk
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-        
-    # 4. Return the URL
-    base_url = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
+    # 4. Return AWS S3 URL
+    # This URL is permanent and won't disappear on restart
+    url = f"https://{AWS_BUCKET_NAME}.s3.amazonaws.com/{unique_filename}"
     
-    return {"url": f"{base_url}/static/images/{unique_filename}"}
+    return {"url": url}
 
 
 @app.delete("/events/{event_id}")
